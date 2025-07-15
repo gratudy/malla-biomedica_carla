@@ -75,3 +75,85 @@ const cursos = [
 ];
 
 // Código previo (cargarCursos, aprobarCurso, etc.) continúa igual...
+// Crea los elementos visuales de los cursos
+function cargarCursos() {
+  const contenedor = document.getElementById("grid");
+  contenedor.innerHTML = "";
+
+  cursos.forEach(curso => {
+    const div = document.createElement("div");
+    div.classList.add("course");
+    div.id = curso.id;
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = curso.nombre;
+
+    const ciclo = document.createElement("div");
+    ciclo.classList.add("ciclo");
+    ciclo.textContent = `Ciclo: ${curso.ciclo}`;
+
+    const boton = document.createElement("button");
+    boton.textContent = "Aprobar";
+    boton.onclick = () => aprobarCurso(curso.id);
+
+    div.appendChild(titulo);
+    div.appendChild(ciclo);
+    div.appendChild(boton);
+
+    // Si tiene prerequisitos, bloquea el curso
+    if (curso.prerrequisitos.length > 0) {
+      div.classList.add("locked");
+    }
+
+    contenedor.appendChild(div);
+  });
+}
+
+// Maneja la aprobación de un curso
+function aprobarCurso(id) {
+  const curso = cursos.find(c => c.id === id);
+  const card = document.getElementById(id);
+  card.classList.add("aprobado");
+  card.querySelector("button").disabled = true;
+
+  // Desbloquea cursos dependientes
+  curso.desbloquea.forEach(did => {
+    const desbloquear = cursos.find(c => c.id === did);
+    if (desbloquear.prerrequisitos.every(pid => document.getElementById(pid)?.classList.contains("aprobado"))) {
+      document.getElementById(did)?.classList.remove("locked");
+    }
+  });
+}
+
+// Poblado de select para filtro
+function cargarFiltro() {
+  const select = document.getElementById("cicloSelect");
+  const ciclosUnicos = [...new Set(cursos.map(c => c.ciclo))].sort((a, b) => a - b);
+
+  ciclosUnicos.forEach(ciclo => {
+    const opt = document.createElement("option");
+    opt.value = ciclo;
+    opt.textContent = `Ciclo ${ciclo}`;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener("change", e => {
+    const valor = e.target.value;
+    const cards = document.querySelectorAll(".course");
+
+    cards.forEach(card => {
+      if (valor === "todos") {
+        card.style.display = "";
+      } else {
+        const curso = cursos.find(c => c.id === card.id);
+        card.style.display = curso.ciclo == valor ? "" : "none";
+      }
+    });
+  });
+}
+
+// Iniciar la página
+window.onload = () => {
+  cargarCursos();
+  cargarFiltro();
+};
